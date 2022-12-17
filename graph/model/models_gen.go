@@ -2,19 +2,113 @@
 
 package model
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+// A Custom type for Auth Object
+type AuthPayload struct {
+	// A jwt token returned after a successful auth
+	Token string `json:"token"`
+	// A user that was authenticated
+	User *User `json:"user"`
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
-}
-
-type User struct {
-	ID   string `json:"id"`
+// The details of a photo
+type Photo struct {
+	// A photo's unique id
+	ID string `json:"id"`
+	// A photo's name
 	Name string `json:"name"`
+	// A photo's url
+	URL string `json:"url"`
+	// (optional) A photo's description
+	Description *string `json:"description"`
+	// A photo's category
+	Category PhotoCategory `json:"category"`
+	// A user that posted the photo
+	PostedBy *User `json:"postedBy"`
+	// The list of the user's tagged in the photo
+	TaggedUsers []*User `json:"taggedUsers"`
+	// The time the photo was created
+	Created string `json:"created"`
+}
+
+// The input sent with the postPhoto Mutation
+type PostPhotoInput struct {
+	// The name of the new photo
+	Name string `json:"name"`
+	// (optional) The category that defines the photo (default = PORTRAIT)
+	Category *PhotoCategory `json:"category"`
+	// (optional) A brief description of the photo
+	Description *string `json:"description"`
+}
+
+// A user who has been authorized by GitHub at least once
+type User struct {
+	// The user's unique GitHub login
+	GithubLogin string `json:"githubLogin"`
+	// The user's first and last name
+	Name *string `json:"name"`
+	// A url for the user's GitHub profile photo
+	Avatar *string `json:"avatar"`
+	// All of the photos posted by this user
+	PostedPhotos []*Photo `json:"postedPhotos"`
+	// All of the photos in which this user appears
+	InPhotos []*Photo `json:"inPhotos"`
+}
+
+// A category enum of photos
+type PhotoCategory string
+
+const (
+	// describe a selfie photo
+	PhotoCategorySelfie PhotoCategory = "SELFIE"
+	// describe a portrait photo
+	PhotoCategoryPortrait PhotoCategory = "PORTRAIT"
+	// describe an action photo
+	PhotoCategoryAction PhotoCategory = "ACTION"
+	// describe a landscape photo
+	PhotoCategoryLandscape PhotoCategory = "LANDSCAPE"
+	// describe a graphic photo
+	PhotoCategoryGraphic PhotoCategory = "GRAPHIC"
+)
+
+var AllPhotoCategory = []PhotoCategory{
+	PhotoCategorySelfie,
+	PhotoCategoryPortrait,
+	PhotoCategoryAction,
+	PhotoCategoryLandscape,
+	PhotoCategoryGraphic,
+}
+
+func (e PhotoCategory) IsValid() bool {
+	switch e {
+	case PhotoCategorySelfie, PhotoCategoryPortrait, PhotoCategoryAction, PhotoCategoryLandscape, PhotoCategoryGraphic:
+		return true
+	}
+	return false
+}
+
+func (e PhotoCategory) String() string {
+	return string(e)
+}
+
+func (e *PhotoCategory) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PhotoCategory(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PhotoCategory", str)
+	}
+	return nil
+}
+
+func (e PhotoCategory) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

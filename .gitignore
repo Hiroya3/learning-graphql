@@ -16,4 +16,5 @@
 
 # GoLand
 *.iml
+git_toolbox_prj.xml
 vcs.xml

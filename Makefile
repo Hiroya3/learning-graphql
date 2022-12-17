@@ -1,0 +1,3 @@
+.PHONY: gqlgen
+gqlgen:
+	gqlgen

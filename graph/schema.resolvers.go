@@ -7,13 +7,32 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Hiroya3/learning-graphql/graph/model"
 )
 
 // PostPhoto is the resolver for the postPhoto field.
 func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoInput) (*model.Photo, error) {
-	panic(fmt.Errorf("not implemented: PostPhoto - postPhoto"))
+	category := ""
+	if input.Category.IsValid() {
+		category = input.Category.String()
+	}
+
+	newPhoto := &model.Photo{
+		ID:          "",
+		Name:        input.Name,
+		URL:         "",
+		Description: input.Description,
+		Category:    model.PhotoCategory(category),
+		PostedBy:    nil,
+		TaggedUsers: nil,
+		Created:     time.Now().String(),
+	}
+
+	r.Photos = append(r.Photos, newPhoto)
+
+	return newPhoto, nil
 }
 
 // TagPhoto is the resolver for the tagPhoto field.
@@ -43,7 +62,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 // TotalPhotos is the resolver for the totalPhotos field.
 func (r *queryResolver) TotalPhotos(ctx context.Context) (int, error) {
-	return 42, nil
+	return len(r.Photos), nil
 }
 
 // AllPhotos is the resolver for the allPhotos field.

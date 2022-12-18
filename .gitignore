@@ -15,6 +15,7 @@
 # vendor/
 
 # GoLand
-*.iml
-git_toolbox_prj.xml
-vcs.xml
+.idea/
+
+# air
+tmp/

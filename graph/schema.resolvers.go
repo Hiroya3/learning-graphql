@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Hiroya3/learning-graphql/graph/model"
@@ -20,7 +21,7 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 	}
 
 	newPhoto := &model.Photo{
-		ID:          "",
+		ID:          strconv.Itoa(r.PhotoId + 1),
 		Name:        input.Name,
 		URL:         "",
 		Description: input.Description,
@@ -67,7 +68,7 @@ func (r *queryResolver) TotalPhotos(ctx context.Context) (int, error) {
 
 // AllPhotos is the resolver for the allPhotos field.
 func (r *queryResolver) AllPhotos(ctx context.Context) ([]*model.Photo, error) {
-	panic(fmt.Errorf("not implemented: AllPhotos - allPhotos"))
+	return r.Photos, nil
 }
 
 // Photo is the resolver for the Photo field.

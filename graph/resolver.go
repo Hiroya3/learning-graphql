@@ -7,5 +7,6 @@ import "github.com/Hiroya3/learning-graphql/graph/model"
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Photos []*model.Photo
+	PhotoId int
+	Photos  []*model.Photo
 }

@@ -15,6 +15,9 @@
 go get github.com/99designs/gqlgen
 ```
 
+### 環境変数設定
+`.env.sample`を`.env`とし、環境変数を設定してください
+
 ## サービス起動
 ```
 docker compose up -d

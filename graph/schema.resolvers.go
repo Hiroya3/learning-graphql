@@ -43,7 +43,7 @@ func (r *mutationResolver) TagPhoto(ctx context.Context, githubLogin string, pho
 
 // GithubAuth is the resolver for the githubAuth field.
 func (r *mutationResolver) GithubAuth(ctx context.Context, code string) (*model.AuthPayload, error) {
-	panic(fmt.Errorf("not implemented: GithubAuth - githubAuth"))
+	return r.AuthService.GetAuth(ctx, code)
 }
 
 // AddFakeUsers is the resolver for the addFakeUsers field.

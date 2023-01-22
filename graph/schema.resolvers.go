@@ -7,33 +7,39 @@ package graph
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"time"
-
+	"github.com/Hiroya3/learning-graphql/db"
 	"github.com/Hiroya3/learning-graphql/graph/model"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
+)
+
+const (
+	dbName          = "mongo"
+	photoCollection = "photo"
 )
 
 // PostPhoto is the resolver for the postPhoto field.
 func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoInput) (*model.Photo, error) {
-	category := ""
-	if input.Category.IsValid() {
-		category = input.Category.String()
-	}
 
-	newPhoto := &model.Photo{
-		ID:          strconv.Itoa(r.PhotoId + 1),
+	now := time.Now()
+
+	result, err := r.DbClient.Database(dbName).Collection(photoCollection).InsertOne(ctx, &db.Photo{
 		Name:        input.Name,
-		URL:         "",
 		Description: input.Description,
-		Category:    model.PhotoCategory(category),
-		PostedBy:    nil,
-		TaggedUsers: nil,
-		Created:     time.Now().String(),
+		Category:    (*string)(input.Category),
+		CreatedAt:   now,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	r.Photos = append(r.Photos, newPhoto)
-
-	return newPhoto, nil
+	return &model.Photo{
+		ID:          result.InsertedID.(primitive.ObjectID).Hex(),
+		Name:        input.Name,
+		Description: input.Description,
+		Category:    *input.Category,
+		Created:     now.String(),
+	}, nil
 }
 
 // TagPhoto is the resolver for the tagPhoto field.

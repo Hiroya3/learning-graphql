@@ -26,10 +26,16 @@ func main() {
 
 	// mongoDBのclient作成
 	fmt.Println(os.Getenv("MONGO_URI"))
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() {
+		if deferErr := client.Disconnect(ctx); deferErr != nil {
+			log.Fatal(deferErr)
+		}
+	}()
 
 	err = client.Ping(context.Background(), readpref.Primary())
 	if err != nil {

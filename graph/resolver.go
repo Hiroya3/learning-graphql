@@ -13,3 +13,8 @@ type Resolver struct {
 	AuthService auth.AuthService
 	DbClient    *mongo.Client
 }
+
+const (
+	dbName          = "mongo"
+	photoCollection = "photo"
+)

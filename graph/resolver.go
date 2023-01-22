@@ -15,6 +15,7 @@ type Resolver struct {
 }
 
 const (
-	dbName          = "mongo"
+	dbName          = "sample"
 	photoCollection = "photo"
+	userCollection  = "user"
 )

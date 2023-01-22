@@ -99,8 +99,8 @@ func (r *queryResolver) AllPhotos(ctx context.Context) ([]*model.Photo, error) {
 			URL:         v.URL,
 			Description: v.Description,
 			Category:    model.PhotoCategory(v.Category),
-			PostedBy:    nil,             // 現時点はnil
-			TaggedUsers: []*model.User{}, // 現時点はnil
+			PostedBy:    &model.User{}, // 現時点はnil
+			TaggedUsers: nil,           // 現時点はnil
 			Created:     v.CreatedAt.String(),
 		})
 	}
@@ -121,12 +121,49 @@ func (r *queryResolver) Photo(ctx context.Context, id string) (*model.Photo, err
 
 // TotalUsers is the resolver for the totalUsers field.
 func (r *queryResolver) TotalUsers(ctx context.Context) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalUsers - totalUsers"))
+	count, err := r.DbClient.Database(dbName).Collection(userCollection).CountDocuments(ctx, bson.M{})
+	if err != nil {
+		log.Printf("fail to count totalUsers,%v", err)
+		return 0, err
+	}
+
+	return int(count), nil
 }
 
 // AllUsers is the resolver for the allUsers field.
 func (r *queryResolver) AllUsers(ctx context.Context) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: AllUsers - allUsers"))
+	res, err := r.DbClient.Database(dbName).Collection(userCollection).Find(ctx, &bson.D{})
+	if err != nil {
+		log.Printf("fail to find allUsers,%v", err)
+		return nil, err
+	}
+
+	result := make([]*model.User, 0)
+
+	for res.Next(ctx) {
+		var v db.User
+		err = res.Decode(&v)
+		if err != nil {
+			log.Printf("fail to decode,%v", err)
+			return nil, err
+		}
+
+		result = append(result, &model.User{
+			GithubLogin:  v.GithubLogin,
+			Name:         v.Name,
+			Avatar:       v.Avatar,
+			PostedPhotos: nil, // 現時点ではnil
+			InPhotos:     nil, // 現時点ではnil
+		})
+	}
+
+	err = res.All(ctx, &result)
+	if err != nil {
+		log.Printf("fail to bind allUsers,%v", err)
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // User is the resolver for the User field.

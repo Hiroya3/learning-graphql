@@ -12,7 +12,7 @@
 [gqlgen](https://github.com/99designs/gqlgen)を利用しています
 以下コマンドでgqlgenをinstallしてください
 ```
-go get github.com/99designs/gqlgen
+go install github.com/99designs/gqlgen
 ```
 
 ### 環境変数設定

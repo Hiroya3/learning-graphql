@@ -7,29 +7,27 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/Hiroya3/learning-graphql/db"
 	"github.com/Hiroya3/learning-graphql/graph/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
-)
-
-const (
-	dbName          = "mongo"
-	photoCollection = "photo"
 )
 
 // PostPhoto is the resolver for the postPhoto field.
 func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoInput) (*model.Photo, error) {
-
 	now := time.Now()
 
 	result, err := r.DbClient.Database(dbName).Collection(photoCollection).InsertOne(ctx, &db.Photo{
 		Name:        input.Name,
 		Description: input.Description,
-		Category:    (*string)(input.Category),
+		Category:    string(*input.Category),
 		CreatedAt:   now,
 	})
 	if err != nil {
+		log.Printf("fail to postPhoto,%v", err)
 		return nil, err
 	}
 
@@ -69,12 +67,51 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 // TotalPhotos is the resolver for the totalPhotos field.
 func (r *queryResolver) TotalPhotos(ctx context.Context) (int, error) {
-	return len(r.Photos), nil
+	counts, err := r.DbClient.Database(dbName).Collection(photoCollection).CountDocuments(ctx, &bson.D{})
+	if err != nil {
+		log.Printf("fail to count totalPhotos,%v", err)
+		return 0, err
+	}
+	return int(counts), nil
 }
 
 // AllPhotos is the resolver for the allPhotos field.
 func (r *queryResolver) AllPhotos(ctx context.Context) ([]*model.Photo, error) {
-	return r.Photos, nil
+	res, err := r.DbClient.Database(dbName).Collection(photoCollection).Find(ctx, &bson.D{})
+	if err != nil {
+		log.Printf("fail to find allPhotos,%v", err)
+		return nil, err
+	}
+
+	result := make([]*model.Photo, 0)
+
+	for res.Next(ctx) {
+		var v db.Photo
+		err = res.Decode(&v)
+		if err != nil {
+			log.Printf("fail to decode,%v", err)
+			return nil, err
+		}
+
+		result = append(result, &model.Photo{
+			ID:          v.Id,
+			Name:        v.Name,
+			URL:         v.URL,
+			Description: v.Description,
+			Category:    model.PhotoCategory(v.Category),
+			PostedBy:    nil,             // 現時点はnil
+			TaggedUsers: []*model.User{}, // 現時点はnil
+			Created:     v.CreatedAt.String(),
+		})
+	}
+
+	err = res.All(ctx, &result)
+	if err != nil {
+		log.Printf("fail to bind allPhotos,%v", err)
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // Photo is the resolver for the Photo field.
@@ -105,3 +142,14 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+const (
+	dbName          = "mongo"
+	photoCollection = "photo"
+)

@@ -82,7 +82,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		NewPhoto func(childComplexity int) int
+		NewPhoto func(childComplexity int, userID string) int
 		NewUser  func(childComplexity int) int
 	}
 
@@ -112,7 +112,7 @@ type QueryResolver interface {
 	User(ctx context.Context, login string) (*model.User, error)
 }
 type SubscriptionResolver interface {
-	NewPhoto(ctx context.Context) (<-chan *model.Photo, error)
+	NewPhoto(ctx context.Context, userID string) (<-chan *model.Photo, error)
 	NewUser(ctx context.Context) (<-chan *model.User, error)
 }
 
@@ -325,7 +325,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Subscription.NewPhoto(childComplexity), true
+		args, err := ec.field_Subscription_newPhoto_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.NewPhoto(childComplexity, args["userID"].(string)), true
 
 	case "Subscription.newUser":
 		if e.complexity.Subscription.NewUser == nil {
@@ -600,6 +605,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_newPhoto_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userID"] = arg0
 	return args, nil
 }
 
@@ -1985,7 +2005,7 @@ func (ec *executionContext) _Subscription_newPhoto(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().NewPhoto(rctx)
+		return ec.resolvers.Subscription().NewPhoto(rctx, fc.Args["userID"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2043,6 +2063,17 @@ func (ec *executionContext) fieldContext_Subscription_newPhoto(ctx context.Conte
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Photo", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_newPhoto_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }

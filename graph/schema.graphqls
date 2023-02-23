@@ -59,6 +59,6 @@ type Mutation {
 }
 
 type Subscription {
-  newPhoto: Photo!
+  newPhoto(userID: String!): Photo! #本ではリクエストに引数がないが、subscribeしているuserIDを判別するために追加した
   newUser: User!
 }

@@ -20,7 +20,7 @@ import (
 func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoInput) (*model.Photo, error) {
 	now := time.Now()
 
-	result, err := r.DbClient.Database(dbName).Collection(photoCollection).InsertOne(ctx, &db.Photo{
+	doc, err := r.DbClient.Database(dbName).Collection(photoCollection).InsertOne(ctx, &db.Photo{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    string(*input.Category),
@@ -31,13 +31,22 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 		return nil, err
 	}
 
-	return &model.Photo{
-		ID:          result.InsertedID.(primitive.ObjectID).Hex(),
+	result := &model.Photo{
+		ID:          doc.InsertedID.(primitive.ObjectID).Hex(),
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    *input.Category,
 		Created:     now.String(),
-	}, nil
+	}
+
+	// subしているuserにpubする
+	r.Mutex.Lock()
+	defer r.Mutex.Unlock()
+	for _, ch := range r.PhotoChs {
+		ch <- result
+	}
+
+	return result, nil
 }
 
 // TagPhoto is the resolver for the tagPhoto field.
@@ -172,8 +181,32 @@ func (r *queryResolver) User(ctx context.Context, login string) (*model.User, er
 }
 
 // NewPhoto is the resolver for the newPhoto field.
-func (r *subscriptionResolver) NewPhoto(ctx context.Context) (<-chan *model.Photo, error) {
-	panic(fmt.Errorf("not implemented: NewPhoto - newPhoto"))
+func (r *subscriptionResolver) NewPhoto(ctx context.Context, userID string) (<-chan *model.Photo, error) {
+	r.Mutex.Lock()
+	defer r.Mutex.Unlock()
+	// ユーザーからsub依頼が来たので、チャネルを追加してpub対象に含める
+
+	// 登録済みであればエラー
+	if _, ok := r.PhotoChs[userID]; ok {
+		log.Printf(fmt.Errorf("%v is already subscribed", userID).Error())
+		return nil, fmt.Errorf("%v is already subscribed", userID)
+	}
+
+	ch := make(chan *model.Photo)
+	r.PhotoChs[userID] = ch
+
+	go func() {
+		// コネクションが終了（subscribeが終了したらチャネルを削除する）
+		<-ctx.Done()
+		r.Mutex.Lock()
+		delete(r.PhotoChs, userID)
+		r.Mutex.Unlock()
+		log.Printf("%s has been unsubscribed", userID)
+	}()
+
+	log.Printf("%v is subscribed", userID)
+
+	return ch, nil
 }
 
 // NewUser is the resolver for the newUser field.

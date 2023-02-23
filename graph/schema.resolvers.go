@@ -171,11 +171,25 @@ func (r *queryResolver) User(ctx context.Context, login string) (*model.User, er
 	panic(fmt.Errorf("not implemented: User - User"))
 }
 
+// NewPhoto is the resolver for the newPhoto field.
+func (r *subscriptionResolver) NewPhoto(ctx context.Context) (<-chan *model.Photo, error) {
+	panic(fmt.Errorf("not implemented: NewPhoto - newPhoto"))
+}
+
+// NewUser is the resolver for the newUser field.
+func (r *subscriptionResolver) NewUser(ctx context.Context) (<-chan *model.User, error) {
+	panic(fmt.Errorf("not implemented: NewUser - newUser"))
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Subscription returns SubscriptionResolver implementation.
+func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

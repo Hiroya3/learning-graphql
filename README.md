@@ -27,7 +27,7 @@ docker compose up -d
 サービスとその役割は以下です。
 
 - graphql-server
-  - graphqlのサーバーです
+  - graphqlのサーバーです(websocketも対応)
   - `localhost:8080`でplaygroundが起動しgraphqlを叩けます
 - mongo
   - mongo-dbをデータベースに利用しています

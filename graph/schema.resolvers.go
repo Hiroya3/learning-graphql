@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -48,18 +49,13 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 	}
 
 	filePath := fmt.Sprintf("%v/%v_%v", assetsDir, id, input.File.Filename)
-	fileBytes := make([]byte, 0)
-	for {
-		i, err2 := input.File.File.Read(fileBytes)
-		if err2 != nil {
-			log.Printf("fail to read file,%v", err)
-			return nil, err2
-		}
-		if i == 0 {
-			break
-		}
+	file, err := io.ReadAll(input.File.File)
+	if err != nil {
+		log.Printf("fail to read file,%v", err)
+		return nil, err
 	}
-	err = os.WriteFile(filePath, fileBytes, 0777)
+
+	err = os.WriteFile(filePath, file, 0777)
 	if err != nil {
 		log.Printf("fail to write file,%v", err)
 		return nil, err
@@ -68,6 +64,7 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 	result := &model.Photo{
 		ID:          id,
 		Name:        input.Name,
+		URL:         filePath, // s3とかにあるといいが、今はローカルのfilePathを返す
 		Description: input.Description,
 		Category:    *input.Category,
 		Created:     now.String(),

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type AuthPayload struct {
@@ -28,6 +30,7 @@ type PostPhotoInput struct {
 	Name        string         `json:"name"`
 	Category    *PhotoCategory `json:"category"`
 	Description *string        `json:"description"`
+	File        graphql.Upload `json:"file"`
 }
 
 type User struct {

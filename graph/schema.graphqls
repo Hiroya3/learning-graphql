@@ -1,64 +1,66 @@
 # ref:https://github.com/MoonHighway/learning-graphql/blob/master/chapter-07/photo-share-api/typeDefs.graphql
 
 scalar DateTime
+scalar Upload
 
 type User {
-  githubLogin: ID!
-  name: String
-  avatar: String
-  postedPhotos: [Photo!]!
-  inPhotos: [Photo!]!
+    githubLogin: ID!
+    name: String
+    avatar: String
+    postedPhotos: [Photo!]!
+    inPhotos: [Photo!]!
 }
 
 type Photo {
-  id: ID!
-  name: String!
-  url: String!
-  description: String
-  category: PhotoCategory!
-  postedBy: User!
-  taggedUsers: [User!]!
-  created: DateTime!
+    id: ID!
+    name: String!
+    url: String!
+    description: String
+    category: PhotoCategory!
+    postedBy: User!
+    taggedUsers: [User!]!
+    created: DateTime!
 }
 
 enum PhotoCategory {
-  SELFIE
-  PORTRAIT
-  ACTION
-  LANDSCAPE
-  GRAPHIC
+    SELFIE
+    PORTRAIT
+    ACTION
+    LANDSCAPE
+    GRAPHIC
 }
 
 input PostPhotoInput {
-  name: String!
-  category: PhotoCategory = PORTRAIT
-  description: String
+    name: String!
+    category: PhotoCategory = PORTRAIT
+    description: String
+    file: Upload!
 }
 
 type AuthPayload {
-  token: String!
-  user: User!
+    token: String!
+    user: User!
 }
 
 type Query {
-  me: User
-  totalPhotos: Int!
-  allPhotos: [Photo!]!
-  Photo(id: ID!): Photo
-  totalUsers: Int!
-  allUsers: [User!]!
-  User(login: ID!): User
+    me: User
+    totalPhotos: Int!
+    allPhotos: [Photo!]!
+    Photo(id: ID!): Photo
+    totalUsers: Int!
+    allUsers: [User!]!
+    User(login: ID!): User
 }
 
 type Mutation {
-  postPhoto(input: PostPhotoInput!): Photo!
-  tagPhoto(githubLogin:ID! photoID:ID!): Photo!
-  githubAuth(code: String!): AuthPayload!
-  addFakeUsers(count: Int=1): [User!]!
-  fakeUserAuth(githubLogin: ID!): AuthPayload!
+    postPhoto(input: PostPhotoInput!): Photo!
+    tagPhoto(githubLogin:ID! photoID:ID!): Photo!
+    githubAuth(code: String!): AuthPayload!
+    addFakeUsers(count: Int=1): [User!]!
+    fakeUserAuth(githubLogin: ID!): AuthPayload!
 }
 
 type Subscription {
-  newPhoto(userID: String!): Photo! #本ではリクエストに引数がないが、subscribeしているuserIDを判別するために追加した
-  newUser: User!
+    newPhoto(userID: String!): Photo! #本ではリクエストに引数がないが、subscribeしているuserIDを判別するために追加した
+    newUser: User!
 }

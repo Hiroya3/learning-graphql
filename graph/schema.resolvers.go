@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/Hiroya3/learning-graphql/db"
@@ -16,10 +17,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	assetsDir = "../assets/photo"
+)
+
 // PostPhoto is the resolver for the postPhoto field.
 func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoInput) (*model.Photo, error) {
 	now := time.Now()
 
+	// photo情報をmongoに保存
 	doc, err := r.DbClient.Database(dbName).Collection(photoCollection).InsertOne(ctx, &db.Photo{
 		Name:        input.Name,
 		Description: input.Description,
@@ -31,8 +37,36 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 		return nil, err
 	}
 
+	id := doc.InsertedID.(primitive.ObjectID).Hex()
+
+	// fileをローカルに保存
+	// ディレクトリの存在確認
+	err = createFileAssetsDirIfNeed()
+	if err != nil {
+		log.Printf("fail to create assets dir,%v", err)
+		return nil, err
+	}
+
+	filePath := fmt.Sprintf("%v/%v_%v", assetsDir, id, input.File.Filename)
+	fileBytes := make([]byte, 0)
+	for {
+		i, err2 := input.File.File.Read(fileBytes)
+		if err2 != nil {
+			log.Printf("fail to read file,%v", err)
+			return nil, err2
+		}
+		if i == 0 {
+			break
+		}
+	}
+	err = os.WriteFile(filePath, fileBytes, 0777)
+	if err != nil {
+		log.Printf("fail to write file,%v", err)
+		return nil, err
+	}
+
 	result := &model.Photo{
-		ID:          doc.InsertedID.(primitive.ObjectID).Hex(),
+		ID:          id,
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    *input.Category,
@@ -47,6 +81,18 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 	}
 
 	return result, nil
+}
+
+func createFileAssetsDirIfNeed() error {
+	if _, err := os.Stat(assetsDir); os.IsNotExist(err) {
+		// ./tempがなければ作成する
+		err = os.Mkdir(assetsDir, 0777)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // TagPhoto is the resolver for the tagPhoto field.

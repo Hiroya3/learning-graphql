@@ -19,22 +19,22 @@ import (
 )
 
 const (
-	assetsDir = "../assets/photo"
+	assetsDir = "./assets/photo"
 )
 
 // PostPhoto is the resolver for the postPhoto field.
 func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoInput) (*model.Photo, error) {
 	now := time.Now()
 
+	// NOTE : 本当はtransaction貼った方がいいんだけど、mongoをreplica setで作らないといけなかったりするので今回は見送る
 	// photo情報をmongoに保存
-	doc, err := r.DbClient.Database(dbName).Collection(photoCollection).InsertOne(ctx, &db.Photo{
+	doc, err := r.DbClient.Database(db.DbName).Collection(db.PhotoCollection).InsertOne(ctx, &db.Photo{
 		Name:        input.Name,
 		Description: input.Description,
 		Category:    string(*input.Category),
 		CreatedAt:   now,
 	})
 	if err != nil {
-		log.Printf("fail to postPhoto,%v", err)
 		return nil, err
 	}
 
@@ -82,8 +82,8 @@ func (r *mutationResolver) PostPhoto(ctx context.Context, input model.PostPhotoI
 
 func createFileAssetsDirIfNeed() error {
 	if _, err := os.Stat(assetsDir); os.IsNotExist(err) {
-		// ./tempがなければ作成する
-		err = os.Mkdir(assetsDir, 0777)
+		// ./assets/photoがなければ作成する
+		err = os.MkdirAll(assetsDir, 0777)
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 // TotalPhotos is the resolver for the totalPhotos field.
 func (r *queryResolver) TotalPhotos(ctx context.Context) (int, error) {
-	counts, err := r.DbClient.Database(dbName).Collection(photoCollection).CountDocuments(ctx, &bson.D{})
+	counts, err := r.DbClient.Database(db.DbName).Collection(db.PhotoCollection).CountDocuments(ctx, &bson.D{})
 	if err != nil {
 		log.Printf("fail to count totalPhotos,%v", err)
 		return 0, err
@@ -129,7 +129,7 @@ func (r *queryResolver) TotalPhotos(ctx context.Context) (int, error) {
 
 // AllPhotos is the resolver for the allPhotos field.
 func (r *queryResolver) AllPhotos(ctx context.Context) ([]*model.Photo, error) {
-	res, err := r.DbClient.Database(dbName).Collection(photoCollection).Find(ctx, &bson.D{})
+	res, err := r.DbClient.Database(db.DbName).Collection(db.PhotoCollection).Find(ctx, &bson.D{})
 	if err != nil {
 		log.Printf("fail to find allPhotos,%v", err)
 		return nil, err
@@ -173,7 +173,7 @@ func (r *queryResolver) Photo(ctx context.Context, id string) (*model.Photo, err
 
 // TotalUsers is the resolver for the totalUsers field.
 func (r *queryResolver) TotalUsers(ctx context.Context) (int, error) {
-	count, err := r.DbClient.Database(dbName).Collection(userCollection).CountDocuments(ctx, bson.M{})
+	count, err := r.DbClient.Database(db.DbName).Collection(db.UserCollection).CountDocuments(ctx, bson.M{})
 	if err != nil {
 		log.Printf("fail to count totalUsers,%v", err)
 		return 0, err
@@ -184,7 +184,7 @@ func (r *queryResolver) TotalUsers(ctx context.Context) (int, error) {
 
 // AllUsers is the resolver for the allUsers field.
 func (r *queryResolver) AllUsers(ctx context.Context) ([]*model.User, error) {
-	res, err := r.DbClient.Database(dbName).Collection(userCollection).Find(ctx, &bson.D{})
+	res, err := r.DbClient.Database(db.DbName).Collection(db.UserCollection).Find(ctx, &bson.D{})
 	if err != nil {
 		log.Printf("fail to find allUsers,%v", err)
 		return nil, err

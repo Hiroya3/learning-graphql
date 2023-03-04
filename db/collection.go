@@ -4,6 +4,11 @@ import "time"
 
 // mongoのcollection定義
 
+const (
+	PhotoCollection = "photo"
+	UserCollection  = "user"
+)
+
 type Photo struct {
 	Id           string    `bson:"_id,omitempty"`
 	Name         string    `bson:"name"`

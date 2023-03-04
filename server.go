@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/Hiroya3/learning-graphql/app/service/auth"
+	"github.com/Hiroya3/learning-graphql/db"
 	"github.com/Hiroya3/learning-graphql/graph/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -46,6 +48,10 @@ func main() {
 	} else {
 		fmt.Println("success!!")
 	}
+
+	// dbとcollectionの作成
+	_ = client.Database(db.DbName).RunCommand(ctx, bson.D{{"create", db.PhotoCollection}})
+	_ = client.Database(db.DbName).RunCommand(ctx, bson.D{{"create", db.UserCollection}})
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{

@@ -17,9 +17,3 @@ type Resolver struct {
 	Mutex       sync.Mutex                   // channelの追加・削除の排他制御
 	DbClient    *mongo.Client
 }
-
-const (
-	dbName          = "sample"
-	photoCollection = "photo"
-	userCollection  = "user"
-)

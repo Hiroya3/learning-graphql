@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/Hiroya3/learning-graphql/app/service/auth"
 	"github.com/Hiroya3/learning-graphql/db"
@@ -65,6 +66,10 @@ func main() {
 
 	// websocketの登録
 	srv.AddTransport(&transport.Websocket{})
+
+	// 複雑度の許容設定
+	// ref:https://github.com/99designs/gqlgen/blob/master/docs/content/reference/complexity.md
+	srv.Use(extension.FixedComplexityLimit(5))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", http.TimeoutHandler(srv, 5000*time.Microsecond, ""))
